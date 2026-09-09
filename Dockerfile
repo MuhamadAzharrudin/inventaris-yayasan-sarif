@@ -18,8 +18,9 @@ FROM php:8.3-fpm-alpine
 
 WORKDIR /var/www/html
 
-# Install System Dependencies & Nginx & Supervisor
+# Install System Dependencies & Nginx & Supervisor & Bash
 RUN apk add --no-cache \
+    bash \
     nginx \
     supervisor \
     curl \
@@ -68,8 +69,12 @@ COPY --from=node-builder /app/public/build ./public/build
 # Install PHP Dependencies (No Dev)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
+# Create required directories for Nginx and Supervisor
+RUN mkdir -p /run/nginx /var/log/supervisor /etc/supervisor/conf.d
+
 # Copy Nginx, Supervisor, and Entrypoint configurations
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
