@@ -2,37 +2,22 @@
 
 set -e
 
-echo "======================================"
-echo "Starting Laravel application"
-echo "======================================"
+echo "Starting Laravel..."
 
 cd /var/www/html
 
-# Ensure Laravel writable directories exist
-mkdir -p storage/framework/cache
-mkdir -p storage/framework/sessions
-mkdir -p storage/framework/views
-mkdir -p storage/logs
-mkdir -p bootstrap/cache
+mkdir -p \
+    storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache
 
-# Set permissions
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
-# Clear old Laravel caches
 php artisan config:clear
-php artisan route:clear
-php artisan view:clear
 
-# Build production caches
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
-echo "Laravel initialization completed."
-
-echo "======================================"
-echo "Starting Supervisor"
-echo "======================================"
+echo "Starting Supervisor..."
 
 exec /usr/bin/supervisord -c /etc/supervisord.conf
