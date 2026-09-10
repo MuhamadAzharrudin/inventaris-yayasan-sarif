@@ -3,11 +3,6 @@ vendor
 .git
 .github
 .env
-.env.backup
 .phpunit.cache
 tests
-storage/*.key
-storage/logs/*.log
-*.pdf
-.DS_Store
-Thumbs.db
+storage/logs/*
