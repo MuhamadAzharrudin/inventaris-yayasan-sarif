@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Admin — Salvras Husnul Abror</title>
+    <title>Login Admin — SalPras Husnul Abror</title>
 
     <link rel="icon" type="image/png" href="{{ asset('image/logo.png') }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}">
@@ -247,7 +247,7 @@
             <div class="brand-row">
                 <img src="{{ asset('image/logo.png') }}" alt="Logo Yayasan" class="brand-logo-img">
                 <div class="brand-title">
-                    <h1>Salvras</h1>
+                    <h1>SalPras</h1>
                     <h2>Sarana &amp; Prasarana</h2>
                     <p>Yayasan Husnul Abror</p>
                 </div>
@@ -256,7 +256,7 @@
             <div class="left-divider"></div>
 
             <p class="left-desc">
-                Sistem informasi Salvras untuk mengelola aset inventaris sarana dan prasarana
+                Sistem informasi SalPras untuk mengelola aset inventaris sarana dan prasarana
                 di lingkungan Yayasan Pendidikan Ponpes Tahfizul Qur'an Husnul Abror
                 yang terdiri dari tingkat MI, MTS, dan SMK — terintegrasi QR Code.
             </p>
