@@ -90,16 +90,13 @@ RUN mkdir -p \
         /var/www/html/storage \
         /var/www/html/bootstrap/cache
 
-# Nginx configuration
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
-
-# Supervisor configuration
 COPY docker/supervisord.conf /etc/supervisord.conf
-
-# Entrypoint
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80
 

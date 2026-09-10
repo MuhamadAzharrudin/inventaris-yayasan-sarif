@@ -2,22 +2,17 @@
 
 set -e
 
-echo "Starting Laravel..."
+echo "===================================="
+echo "Starting PHP-FPM + Nginx"
+echo "===================================="
 
-cd /var/www/html
+mkdir -p /run/nginx
+mkdir -p /var/log/supervisor
 
-mkdir -p \
-    storage/framework/cache \
-    storage/framework/sessions \
-    storage/framework/views \
-    storage/logs \
-    bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage
+chown -R www-data:www-data /var/www/html/bootstrap/cache
 
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
-
-php artisan config:clear
-
-echo "Starting Supervisor..."
+chmod -R 775 /var/www/html/storage
+chmod -R 775 /var/www/html/bootstrap/cache
 
 exec /usr/bin/supervisord -c /etc/supervisord.conf
