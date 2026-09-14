@@ -25,18 +25,23 @@
         <form action="{{ route('laporan.store') }}" method="POST" class="card-pad" style="display:flex;flex-direction:column;gap:16px;">
             @csrf
 
-            {{-- ── SCANNER KAMERA ── --}}
-            <div style="background:var(--slate);border:2px dashed #93C5FD;border-radius:13px;padding:17px;text-align:center;">
+            {{-- ── SCANNER & UPLOAD QR CODE ── --}}
+            <div id="qrDropZone" style="background:var(--slate);border:2px dashed #93C5FD;border-radius:13px;padding:17px;text-align:center;transition:border-color .2s,background .2s;">
                 <h4 style="font-size:.92rem;font-weight:800;color:var(--navy);display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <i data-lucide="camera"></i> Live Camera QR / Barcode Scanner
+                    <i data-lucide="qr-code"></i> Pindai / Upload QR Code Barang
                 </h4>
                 <p style="font-size:.79rem;color:var(--gray);margin:6px 0 12px;">
-                    Izinkan akses kamera untuk memindai label QR pada fisik barang
+                    Gunakan kamera langsung atau upload file gambar/foto QR Code barang untuk pengisian otomatis
                 </p>
+
+                <input type="file" id="qrFileInput" accept="image/*" style="display:none;" onchange="handleQrFileUpload(this)">
 
                 <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
                     <button type="button" id="btnStartScan" class="btn btn-blue" onclick="startCameraScan()">
-                        <i data-lucide="qr-code"></i> Buka Kamera & Scan
+                        <i data-lucide="camera"></i> Buka Kamera Scan
+                    </button>
+                    <button type="button" id="btnUploadQr" class="btn btn-primary" onclick="document.getElementById('qrFileInput').click()">
+                        <i data-lucide="upload"></i> Upload Gambar QR
                     </button>
                     <button type="button" id="btnStopScan" class="btn btn-red" style="display:none;" onclick="stopCameraScan()">
                         <i data-lucide="x"></i> Tutup Kamera
@@ -184,6 +189,63 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
+    function matchAndSelectAsset(decodedText) {
+        const select = document.getElementById('assetSelect');
+        const target = decodedText.trim().toUpperCase();
+        let found = false;
+
+        for (let i = 0; i < select.options.length; i++) {
+            const opt  = select.options[i];
+            const kode = (opt.getAttribute('data-kode') || '').toUpperCase();
+            if (kode && (kode === target || target.includes(kode) || kode.includes(target))) {
+                select.selectedIndex = i;
+                autofillAssetInfo();
+                found = true;
+                setScanStatus('✓ QR Code berhasil dibaca: ' + opt.getAttribute('data-nama') + ' (' + opt.getAttribute('data-kode') + ')', '#16A34A');
+                break;
+            }
+        }
+
+        if (!found) {
+            setScanStatus('QR Code terbaca "' + decodedText + '", namun tidak cocok dengan data barang yang tersedia.', '#DC2626');
+        }
+
+        return found;
+    }
+
+    async function handleQrFileUpload(input) {
+        if (!input.files || input.files.length === 0) return;
+        const file = input.files[0];
+
+        if (typeof Html5Qrcode === 'undefined') {
+            setScanStatus('Pustaka scanner gagal dimuat. Periksa koneksi internet Anda.', '#DC2626');
+            return;
+        }
+
+        setScanStatus('Memproses file gambar QR Code: ' + file.name + '…', '#2563EB');
+
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode('reader');
+        }
+
+        try {
+            // Tutup kamera jika sedang menyala
+            if (html5QrCode.isScanning) {
+                await html5QrCode.stop();
+                document.getElementById('scannerContainer').style.display = 'none';
+                document.getElementById('btnStartScan').style.display = 'inline-flex';
+                document.getElementById('btnStopScan').style.display = 'none';
+            }
+
+            const decodedText = await html5QrCode.scanFile(file, true);
+            matchAndSelectAsset(decodedText);
+        } catch (err) {
+            setScanStatus('QR Code tidak terdeteksi pada file gambar "' + file.name + '". Pastikan gambar QR jelas dan tidak buram.', '#DC2626');
+        } finally {
+            input.value = '';
+        }
+    }
+
     function startCameraScan() {
         if (typeof Html5Qrcode === 'undefined') {
             setScanStatus('Pustaka scanner gagal dimuat. Periksa koneksi internet Anda.', '#DC2626');
@@ -201,25 +263,7 @@
             { facingMode: 'environment' },
             { fps: 10, qrbox: { width: 240, height: 240 } },
             (decodedText) => {
-                const select = document.getElementById('assetSelect');
-                const target = decodedText.trim().toUpperCase();
-                let found = false;
-
-                for (let i = 0; i < select.options.length; i++) {
-                    const kode = (select.options[i].getAttribute('data-kode') || '').toUpperCase();
-                    if (kode && (kode === target || target.includes(kode))) {
-                        select.selectedIndex = i;
-                        autofillAssetInfo();
-                        found = true;
-                        setScanStatus('✓ Barang ditemukan: ' + select.options[i].getAttribute('data-nama'), '#16A34A');
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    setScanStatus('Kode "' + decodedText + '" tidak cocok dengan data barang unit Anda.', '#DC2626');
-                }
-
+                matchAndSelectAsset(decodedText);
                 stopCameraScan();
             },
             () => { /* frame tanpa QR: abaikan */ }
@@ -243,6 +287,36 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', autofillAssetInfo);
+    document.addEventListener('DOMContentLoaded', () => {
+        autofillAssetInfo();
+
+        const dropZone = document.getElementById('qrDropZone');
+        if (dropZone) {
+            ['dragenter', 'dragover'].forEach(evt => {
+                dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = '#2563EB';
+                    dropZone.style.background = '#EFF6FF';
+                });
+            });
+            ['dragleave', 'drop'].forEach(evt => {
+                dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = '#93C5FD';
+                    dropZone.style.background = 'var(--slate)';
+                });
+            });
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length > 0) {
+                    const fileInput = document.getElementById('qrFileInput');
+                    fileInput.files = dt.files;
+                    handleQrFileUpload(fileInput);
+                }
+            });
+        }
+    });
 </script>
 @endsection

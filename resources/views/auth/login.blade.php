@@ -247,7 +247,7 @@
             <div class="brand-row">
                 <img src="{{ asset('image/logo.png') }}" alt="Logo Yayasan" class="brand-logo-img">
                 <div class="brand-title">
-                    <h1>SalPras</h1>
+                    <h1>SarPras</h1>
                     <h2>Sarana &amp; Prasarana</h2>
                     <p>Yayasan Husnul Abror</p>
                 </div>

@@ -99,6 +99,22 @@
     </form>
 </div>
 
+{{-- ── BULK ACTION BAR ── --}}
+<form id="bulkDeleteForm" action="{{ route('mutasi.bulkDestroy') }}" method="POST" onsubmit="return confirmBulkDelete(event);">
+    @csrf
+    <div id="bulkActionBar" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:13px;padding:12px 18px;margin-bottom:16px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 4px 12px rgba(220,38,38,.08);">
+        <div style="font-size:.88rem;color:#991B1B;font-weight:700;display:flex;align-items:center;gap:8px;">
+            <i data-lucide="check-square" style="width:16px;height:16px;"></i>
+            <span id="bulkSelectedText">0 data dipilih</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button type="button" class="btn btn-soft btn-sm" onclick="clearAllSelections()">Batal Pilihan</button>
+            <button type="submit" class="btn btn-red btn-sm">
+                <i data-lucide="trash-2"></i> Hapus Terpilih (<span id="bulkCountBadge">0</span>)
+            </button>
+        </div>
+    </div>
+
 {{-- ── TABEL ── --}}
 <div class="card">
     <div class="card-head">
@@ -110,6 +126,9 @@
         <table class="table table-wide">
             <thead>
                 <tr>
+                    <th style="width:38px;text-align:center;">
+                        <input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll(this)" style="cursor:pointer;width:16px;height:16px;accent-color:#DC2626;" title="Pilih semua di halaman ini">
+                    </th>
                     <th style="width:44px;">No</th>
                     <th>Waktu Masuk</th>
                     @if($isYayasan)<th>Unit</th>@endif
@@ -119,11 +138,15 @@
                     <th>Jenis</th>
                     <th style="text-align:center;">Qty</th>
                     <th>Keterangan</th>
+                    <th style="text-align:center;width:60px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($mutations as $i => $m)
                     <tr>
+                        <td style="text-align:center;">
+                            <input type="checkbox" name="ids[]" value="{{ $m->id }}" class="check-item" onchange="updateBulkState()" style="cursor:pointer;width:16px;height:16px;accent-color:#DC2626;">
+                        </td>
                         <td style="color:var(--gray);font-weight:700;">{{ $mutations->firstItem() + $i }}</td>
                         <td class="td-nowrap" style="color:var(--gray);">{{ $m->created_at?->format('d/m/Y H:i') }}</td>
                         @if($isYayasan)
@@ -148,10 +171,16 @@
                         </td>
                         <td style="text-align:center;"><span class="badge badge-green">+{{ $m->qty }} unit</span></td>
                         <td style="font-size:.8rem;color:var(--gray);max-width:300px;">{{ $m->keterangan }}</td>
+                        <td style="text-align:center;">
+                            <button type="button" class="btn btn-ghost btn-icon btn-sm" title="Hapus catatan" style="color:#DC2626;"
+                                    onclick="deleteSingleItem({{ $m->id }})">
+                                <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                            </button>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $isYayasan ? 9 : 8 }}">
+                        <td colspan="{{ $isYayasan ? 11 : 10 }}">
                             <div class="empty-state">
                                 <i data-lucide="package-search" style="width:38px;height:38px;stroke-width:1.4;"></i>
                                 <strong>Belum ada log barang masuk</strong>
@@ -168,6 +197,13 @@
         <div class="card-pad pagination-wrap">{{ $mutations->links() }}</div>
     @endif
 </div>
+</form>
+
+{{-- Form hapus satuan tersembunyi --}}
+<form id="singleDeleteForm" method="POST" style="display:none;">
+    @csrf
+    @method('DELETE')
+</form>
 
 @unless($isYayasan)
 {{-- ══ MODAL CATAT BARANG MASUK ══ --}}
@@ -240,9 +276,74 @@
 @endsection
 
 @section('scripts')
-@unless($isYayasan)
-@if($errors->any() && old('asset_id'))
-<script>document.addEventListener('DOMContentLoaded', () => openModal('masukModal'));</script>
-@endif
-@endunless
+<script>
+    function getCheckedBoxes() {
+        return Array.from(document.querySelectorAll('.check-item:checked'));
+    }
+
+    function updateBulkState() {
+        const checked = getCheckedBoxes();
+        const count = checked.length;
+        const bar = document.getElementById('bulkActionBar');
+        const badge = document.getElementById('bulkCountBadge');
+        const text = document.getElementById('bulkSelectedText');
+        const selectAll = document.getElementById('selectAllCheckbox');
+        const allItems = document.querySelectorAll('.check-item');
+
+        if (count > 0) {
+            bar.style.display = 'flex';
+            badge.textContent = count;
+            text.textContent = count + ' data mutasi dipilih';
+        } else {
+            bar.style.display = 'none';
+        }
+
+        if (selectAll && allItems.length > 0) {
+            selectAll.checked = (count === allItems.length);
+            selectAll.indeterminate = (count > 0 && count < allItems.length);
+        }
+    }
+
+    function toggleSelectAll(master) {
+        const items = document.querySelectorAll('.check-item');
+        items.forEach(item => { item.checked = master.checked; });
+        updateBulkState();
+    }
+
+    function clearAllSelections() {
+        const selectAll = document.getElementById('selectAllCheckbox');
+        if (selectAll) selectAll.checked = false;
+        const items = document.querySelectorAll('.check-item');
+        items.forEach(item => { item.checked = false; });
+        updateBulkState();
+    }
+
+    function confirmBulkDelete(e) {
+        const count = getCheckedBoxes().length;
+        if (count === 0) {
+            e.preventDefault();
+            alert('Pilih setidaknya satu data yang ingin dihapus.');
+            return false;
+        }
+        if (!confirm('Apakah Anda yakin ingin menghapus ' + count + ' data mutasi barang masuk yang dipilih?')) {
+            e.preventDefault();
+            return false;
+        }
+        return true;
+    }
+
+    function deleteSingleItem(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus catatan barang masuk ini?')) {
+            const form = document.getElementById('singleDeleteForm');
+            form.action = '{{ url("/mutasi") }}/' + id;
+            form.submit();
+        }
+    }
+
+    @unless($isYayasan)
+        @if($errors->any() && old('asset_id'))
+            document.addEventListener('DOMContentLoaded', () => openModal('masukModal'));
+        @endif
+    @endunless
+</script>
 @endsection

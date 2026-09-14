@@ -72,6 +72,7 @@
     </div>
     <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;">
         <span class="hero-chip"><i data-lucide="shield-check" style="width:13px;height:13px;"></i> {{ auth()->user()->roleLabel() }}</span>
+        <a href="{{ route('laporan.create') }}" class="btn btn-ghost btn-sm"><i data-lucide="file-plus"></i> Buat Laporan</a>
         <a href="{{ route('aset.scan') }}" class="btn btn-ghost btn-sm"><i data-lucide="scan-line"></i> Scan QR</a>
     </div>
 </div>

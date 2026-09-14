@@ -425,6 +425,34 @@ class MutasiController extends Controller
             ->with('success', 'Pengembalian ' . $qty . ' unit barang pinjaman berhasil dicatat.');
     }
 
+    /* ── HAPUS DATA MUTASI ──────────────────────────────────── */
+
+    public function destroy(int $id)
+    {
+        $mutation = AssetMutation::findOrFail($id);
+        $this->guardUnit($mutation->unit_id);
+        $mutation->delete();
+
+        return redirect()->back()->with('success', 'Data mutasi barang berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids'   => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'exists:asset_mutations,id'],
+        ], [
+            'ids.required' => 'Pilih setidaknya satu data mutasi yang ingin dihapus.',
+            'ids.min'      => 'Pilih setidaknya satu data mutasi yang ingin dihapus.',
+        ]);
+
+        $query = AssetMutation::whereIn('id', $validated['ids']);
+        $this->scopeUnit($query);
+        $count = $query->delete();
+
+        return redirect()->back()->with('success', $count . ' data mutasi barang berhasil dihapus.');
+    }
+
     /* ── Helper ─────────────────────────────────────────────── */
 
     /**

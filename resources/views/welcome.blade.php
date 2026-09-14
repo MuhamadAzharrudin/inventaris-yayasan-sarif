@@ -273,7 +273,7 @@
     <a href="#" class="nav-logo">
         <img src="{{ asset('image/logo.png') }}" alt="Logo Yayasan" class="nav-logo-img">
         <span class="nav-logo-text">
-            <strong>SalPras</strong>
+            <strong>SarPras</strong>
             <span>Yayasan Husnul Abror</span>
         </span>
     </a>

@@ -63,6 +63,10 @@ Route::middleware('auth')->group(function () {
 
         Route::put('/laporan/{id}/status', [LaporanController::class, 'updateStatus'])
             ->whereNumber('id')->name('laporan.updateStatus');
+        Route::delete('/laporan/{id}', [LaporanController::class, 'destroy'])
+            ->whereNumber('id')->name('laporan.destroy');
+        Route::post('/laporan/bulk-delete', [LaporanController::class, 'bulkDestroy'])
+            ->name('laporan.bulkDestroy');
     });
 
     /* ── Admin Unit Sekolah: pendataan & master data ──────────────── */
@@ -127,6 +131,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/barang-masuk', [MutasiController::class, 'masuk'])->name('laporan.masuk');
     Route::get('/barang-keluar', [MutasiController::class, 'keluar'])->name('laporan.keluar');
+    Route::delete('/mutasi/{id}', [MutasiController::class, 'destroy'])
+        ->whereNumber('id')->name('mutasi.destroy');
+    Route::post('/mutasi/bulk-delete', [MutasiController::class, 'bulkDestroy'])
+        ->name('mutasi.bulkDestroy');
 
     /* ── Pengaturan Akun & User (Yayasan) ─────────────────────────── */
     Route::middleware('super_admin')->prefix('admin')->group(function () {

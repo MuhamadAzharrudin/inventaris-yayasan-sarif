@@ -232,6 +232,35 @@ class LaporanController extends Controller
     }
 
     /**
+     * Hapus laporan (khusus Admin Yayasan / Super Admin).
+     */
+    public function destroy(int $id)
+    {
+        $report = Report::findOrFail($id);
+        $report->delete();
+
+        return redirect()->back()->with('success', 'Laporan berhasil dihapus.');
+    }
+
+    /**
+     * Hapus banyak laporan sekaligus (khusus Admin Yayasan / Super Admin).
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids'   => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'exists:reports,id'],
+        ], [
+            'ids.required' => 'Pilih setidaknya satu laporan yang ingin dihapus.',
+            'ids.min'      => 'Pilih setidaknya satu laporan yang ingin dihapus.',
+        ]);
+
+        $count = Report::whereIn('id', $validated['ids'])->delete();
+
+        return redirect()->back()->with('success', $count . ' laporan berhasil dihapus.');
+    }
+
+    /**
      * Cetak satu laporan (HTML siap print / simpan PDF dari peramban).
      */
     public function cetakPdf(int $id)

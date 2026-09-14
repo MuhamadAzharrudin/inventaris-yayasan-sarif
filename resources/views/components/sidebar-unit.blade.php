@@ -47,7 +47,7 @@
     <div class="sidebar-brand">
         <img src="{{ asset('image/logo.png') }}" alt="Logo" class="sidebar-brand-img" style="width:34px; height:34px; object-fit:contain; flex-shrink:0;">
         <div class="brand-text">
-            <span class="brand-name">Salvras</span>
+            <span class="brand-name">SarPras</span>
             <span class="brand-unit">{{ $unit->nama ?? 'Unit Sekolah' }}</span>
         </div>
         <button class="sidebar-toggle" id="sidebarToggle" type="button" title="Perkecil / perbesar sidebar">

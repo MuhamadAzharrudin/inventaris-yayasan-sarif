@@ -29,9 +29,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         /* ── 1. Unit Sekolah ─────────────────────────────────── */
-        $mi  = Unit::create(['nama' => 'MI Husnul Abror',  'kode' => 'mi',  'kepala_unit' => 'Ustadz Ahmad, S.Pd.I']);
-        $mts = Unit::create(['nama' => 'MTS Husnul Abror', 'kode' => 'smp', 'kepala_unit' => 'Drs. H. Abdullah']);
-        $smk = Unit::create(['nama' => 'SMK Husnul Abror', 'kode' => 'smk', 'kepala_unit' => 'Ir. Muhammad Ridwan, M.T.']);
+        $mi  = Unit::firstOrCreate(['kode' => 'mi'],  ['nama' => 'MI Husnul Abror',  'kepala_unit' => 'Ustadz Ahmad, S.Pd.I']);
+        $mts = Unit::firstOrCreate(['kode' => 'smp'], ['nama' => 'MTS Husnul Abror', 'kepala_unit' => 'Drs. H. Abdullah']);
+        $smk = Unit::firstOrCreate(['kode' => 'smk'], ['nama' => 'SMK Husnul Abror', 'kepala_unit' => 'Ir. Muhammad Ridwan, M.T.']);
 
         /* ── 2. Akun Pengguna ────────────────────────────────── */
         $yayasanUser = User::create([

@@ -22,9 +22,14 @@
         <div class="card-head"><h3><i data-lucide="camera"></i> Kamera Pemindai</h3></div>
         <div class="card-pad" style="display:flex;flex-direction:column;gap:14px;">
 
+            <input type="file" id="qrFileInput" accept="image/*" style="display:none;" onchange="handleQrFileUpload(this)">
+
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button type="button" id="btnStartScan" class="btn btn-blue" onclick="startCameraScan()">
-                    <i data-lucide="qr-code"></i> Buka Kamera
+                    <i data-lucide="camera"></i> Buka Kamera
+                </button>
+                <button type="button" id="btnUploadQr" class="btn btn-primary" onclick="document.getElementById('qrFileInput').click()">
+                    <i data-lucide="upload"></i> Upload Gambar QR
                 </button>
                 <button type="button" id="btnStopScan" class="btn btn-red" style="display:none;" onclick="stopCameraScan()">
                     <i data-lucide="x"></i> Tutup Kamera
@@ -240,10 +245,41 @@
             document.getElementById('btnStartScan').style.display = 'inline-flex';
             document.getElementById('btnStopScan').style.display = 'none';
         };
+
         if (html5QrCode && html5QrCode.isScanning) {
             html5QrCode.stop().then(reset).catch(reset);
         } else {
             reset();
+        }
+    }
+
+    async function handleQrFileUpload(input) {
+        if (!input.files || input.files.length === 0) return;
+        const file = input.files[0];
+
+        if (typeof Html5Qrcode === 'undefined') {
+            setStatus('Pustaka scanner gagal dimuat. Periksa koneksi internet Anda.', 'error');
+            return;
+        }
+
+        setStatus('Memproses file gambar QR Code: <strong>' + escapeHtml(file.name) + '</strong>…', 'info');
+
+        if (!html5QrCode) html5QrCode = new Html5Qrcode('reader');
+
+        try {
+            if (html5QrCode.isScanning) {
+                await html5QrCode.stop();
+                document.getElementById('scannerContainer').style.display = 'none';
+                document.getElementById('btnStartScan').style.display = 'inline-flex';
+                document.getElementById('btnStopScan').style.display = 'none';
+            }
+
+            const decodedText = await html5QrCode.scanFile(file, true);
+            lookupKode(decodedText);
+        } catch (err) {
+            setStatus('QR Code tidak terdeteksi pada file gambar <strong>' + escapeHtml(file.name) + '</strong>. Pastikan gambar QR jelas dan tidak buram.', 'error');
+        } finally {
+            input.value = '';
         }
     }
 </script>
