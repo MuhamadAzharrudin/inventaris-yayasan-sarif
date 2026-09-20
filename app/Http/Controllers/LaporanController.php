@@ -9,6 +9,7 @@ use App\Models\Unit;
 use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -92,15 +93,17 @@ class LaporanController extends Controller
         $user = $this->currentUser();
 
         $validated = $request->validate([
-            'asset_id'  => ['required', 'exists:assets,id'],
-            'judul'     => ['required', 'string', 'max:255'],
-            'deskripsi' => ['required', 'string', 'max:2000'],
-            'qty'       => ['nullable', 'integer', 'min:1'],
+            'asset_id'          => ['required', 'exists:assets,id'],
+            'judul'             => ['required', 'string', 'max:255'],
+            'tingkat_kerusakan' => ['nullable', 'in:rusak_ringan,rusak_berat'],
+            'deskripsi'         => ['required', 'string', 'max:2000'],
+            'qty'               => ['nullable', 'integer', 'min:1'],
         ], [], [
-            'asset_id'  => 'barang',
-            'judul'     => 'judul pelaporan',
-            'deskripsi' => 'deskripsi pelaporan',
-            'qty'       => 'jumlah unit terdampak',
+            'asset_id'          => 'barang',
+            'judul'             => 'judul pelaporan',
+            'tingkat_kerusakan' => 'tingkat kerusakan',
+            'deskripsi'         => 'deskripsi pelaporan',
+            'qty'               => 'jumlah unit terdampak',
         ]);
 
         /** @var Asset $asset */
@@ -116,23 +119,49 @@ class LaporanController extends Controller
             ]);
         }
 
-        $report = Report::create([
-            'unit_id'     => $asset->unit_id,
-            'asset_id'    => $asset->id,
-            'location_id' => $asset->location_id,
-            'user_id'     => $user->id,
-            'jenis'       => 'kerusakan',
-            'judul'       => $validated['judul'],
-            'deskripsi'   => $validated['deskripsi'],
-            'qty'         => $qty,
-            'status'      => 'pending',
-            'verifikasi'  => null,
-        ]);
+        $tingkat = $validated['tingkat_kerusakan'] ?? 'rusak_ringan';
+        $report  = null;
+
+        DB::transaction(function () use ($asset, $qty, $tingkat, $validated, $user, &$report) {
+            // Update kondisi barang: pindahkan unit baik ke kondisi rusak jika barang awalnya tercatat baik
+            if ($asset->kondisi_baik > 0) {
+                $pindah = min($asset->kondisi_baik, $qty);
+                $asset->kondisi_baik = max(0, $asset->kondisi_baik - $pindah);
+                if ($tingkat === 'rusak_berat') {
+                    $asset->kondisi_rusak_berat += $pindah;
+                } else {
+                    $asset->kondisi_rusak_ringan += $pindah;
+                }
+                $asset->syncTotalQty();
+                $asset->save();
+            } elseif ($asset->kondisi_rusak_ringan == 0 && $asset->kondisi_rusak_berat == 0) {
+                if ($tingkat === 'rusak_berat') {
+                    $asset->kondisi_rusak_berat = $qty;
+                } else {
+                    $asset->kondisi_rusak_ringan = $qty;
+                }
+                $asset->syncTotalQty();
+                $asset->save();
+            }
+
+            $report = Report::create([
+                'unit_id'     => $asset->unit_id,
+                'asset_id'    => $asset->id,
+                'location_id' => $asset->location_id,
+                'user_id'     => $user->id,
+                'jenis'       => 'kerusakan',
+                'judul'       => $validated['judul'],
+                'deskripsi'   => $validated['deskripsi'],
+                'qty'         => $qty,
+                'status'      => 'pending',
+                'verifikasi'  => null,
+            ]);
+        });
 
         NotificationService::laporanDibuat($report->fresh(['unit']), $user);
 
         return redirect()->route('laporan.index')
-            ->with('success', 'Laporan berhasil dikirim dan sedang menunggu verifikasi Admin Yayasan.');
+            ->with('success', 'Laporan kerusakan berhasil dikirim dan barang otomatis tercatat pada menu Barang Rusak.');
     }
 
     /**

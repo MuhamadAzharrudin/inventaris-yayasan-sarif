@@ -112,6 +112,15 @@
                 </div>
 
                 <div class="field">
+                    <label for="tingkat_kerusakan">Tingkat Kerusakan <span class="req">*</span></label>
+                    <select id="tingkat_kerusakan" name="tingkat_kerusakan" class="select" required>
+                        <option value="rusak_ringan" @selected(old('tingkat_kerusakan', 'rusak_ringan') === 'rusak_ringan')>Rusak Ringan (Dapat diperbaiki / servis)</option>
+                        <option value="rusak_berat" @selected(old('tingkat_kerusakan') === 'rusak_berat')>Rusak Berat (Patah / Mati total / Perlu diganti)</option>
+                    </select>
+                    @error('tingkat_kerusakan')<span class="field-error">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="field">
                     <label for="qty">Jumlah unit terdampak <span class="req">*</span></label>
                     <input type="number" id="qty" name="qty" class="input" min="1" required
                            value="{{ old('qty', 1) }}">

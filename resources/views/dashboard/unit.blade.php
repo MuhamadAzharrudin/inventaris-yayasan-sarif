@@ -100,10 +100,10 @@
     <div class="stat">
         <div class="stat-top">
             <span class="stat-lbl">Perlu Perbaikan</span>
-            <span class="stat-ico" style="background:#FEF3C7;color:#D97706;"><i data-lucide="wrench"></i></span>
+            <span class="stat-ico" style="background:#FEF08A;color:#B45309;"><i data-lucide="wrench"></i></span>
         </div>
         <div class="stat-val" style="color:#B45309;">{{ number_format($stats['aset_rusak_ringan']) }} <small>unit</small></div>
-        <div class="stat-sub">Rusak ringan / butuh servis</div>
+        <div class="stat-sub">Rusak ringan</div>
     </div>
 
     <div class="stat">
@@ -112,7 +112,7 @@
             <span class="stat-ico" style="background:#FEE2E2;color:#DC2626;"><i data-lucide="alert-octagon"></i></span>
         </div>
         <div class="stat-val" style="color:#B91C1C;">{{ number_format($stats['aset_rusak_berat']) }} <small>unit</small></div>
-        <div class="stat-sub">Diusulkan untuk penggantian</div>
+        <div class="stat-sub">Perlu penggantian</div>
     </div>
 
     <div class="stat">
@@ -150,10 +150,6 @@
     <a href="{{ route('aset.cetak-label') }}" class="room-card">
         <div class="room-name"><i data-lucide="printer" style="color:#2563EB;"></i> Cetak Label QR</div>
         <div class="room-meta">Pilih ruangan & barang yang akan dicetak</div>
-    </a>
-    <a href="{{ route('laporan.selesai') }}" class="room-card">
-        <div class="room-name"><i data-lucide="check-circle-2" style="color:#16A34A;"></i> Pelaporan Selesai</div>
-        <div class="room-meta">Laporan yang telah diverifikasi Yayasan</div>
     </a>
 </div>
 
